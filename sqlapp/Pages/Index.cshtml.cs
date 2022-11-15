@@ -2,13 +2,14 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using sqlapp.Models;
 using sqlapp.Services;
+using System.Collections.Generic;
 
 namespace sqlapp.Pages
 {
     public class IndexModel : PageModel
     {
-
         private readonly IProductService _productService;
+        public bool IsBeta;
 
         public IndexModel(IProductService productService)
         {
@@ -16,10 +17,11 @@ namespace sqlapp.Pages
         }
 
         public List<Product> Products; 
+        
         public void OnGet()
         {
-            Products= _productService.GetProducts();
-
+            IsBeta = _productService.IsBeta().GetAwaiter().GetResult();
+            Products = _productService.GetProductList().GetAwaiter().GetResult();
         }
     }
 }

@@ -1,10 +1,21 @@
+using Microsoft.FeatureManagement;
 using sqlapp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var connectionString = "Endpoint=https://planet-appconfig.azconfig.io;Id=yTwn-l8-s0:QTbrbR1jBYI5olhc6Jpz;Secret=X4vPfA+AvHzLqWLzbD1nSh1RwUW55vURbsQFMgBhf14=";
+builder.Host.ConfigureAppConfiguration(_ => 
+{
+    _.AddAzureAppConfiguration(c =>
+    {
+        c.Connect(connectionString).UseFeatureFlags();
+    });
+});
+
 builder.Services.AddTransient<IProductService, ProductService>();
 
 builder.Services.AddRazorPages();
+builder.Services.AddFeatureManagement();
 
 var app = builder.Build();
 

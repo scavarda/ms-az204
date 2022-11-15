@@ -1,5 +1,7 @@
-﻿using sqlapp.Models;
+﻿using Microsoft.FeatureManagement;
+using sqlapp.Models;
 using System.Data.SqlClient;
+using System.Text.Json;
 
 namespace sqlapp.Services
 {
@@ -8,17 +10,42 @@ namespace sqlapp.Services
     public class ProductService : IProductService
     {
         private readonly IConfiguration _configuration;
-        public ProductService(IConfiguration configuration)
+        private readonly IFeatureManager _feature;
+
+        public ProductService(IConfiguration configuration, IFeatureManager feature)
         {
             _configuration = configuration;
+            _feature = feature;
         }
         private SqlConnection GetConnection()
         {
-
-            return new SqlConnection(_configuration.GetConnectionString("SQLConnection"));
+            var x = _configuration["SQLConnection"];
+            return new SqlConnection(x);
         }
-        public List<Product> GetProducts()
+
+        public async Task<bool> IsBeta()
         {
+            if (await _feature.IsEnabledAsync("beta"))
+            {
+                return true;
+            }
+            else return false;
+        }
+
+        public async Task<List<Product>> GetProductList()
+        {
+            string funct = "https://planet-appfunction.azurewebsites.net/api/GetProducts?code=03z9ng-OYQ9UcQYamsuohnJ4jU57zFpV95fSM_hZ3VFDAzFul5BRfw==";
+            using HttpClient client = new HttpClient();
+            HttpResponseMessage response = await client.GetAsync(funct);
+            string content = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<List<Product>>(content, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            });
+        }
+
+        public List<Product> GetProducts()
+        {            
             List<Product> _product_lst = new List<Product>();
             string _statement = "SELECT ProductID,ProductName,Quantity from Products";
             SqlConnection _connection = GetConnection();
@@ -47,4 +74,5 @@ namespace sqlapp.Services
 
     }
 }
+
 
